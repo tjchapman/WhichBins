@@ -1,0 +1,5 @@
+services:
+  which_bins:
+    build:
+      context: .
+      dockerfile: Dockerfile
