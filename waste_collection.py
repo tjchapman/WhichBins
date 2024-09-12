@@ -86,7 +86,7 @@ class Source:
             waste_date = card.find("span").text.strip().split()[-1]
             entries.append(
                 {
-            'date' : datetime.strptime(waste_date, "%d/%m/%Y").date(),
+            'date' : str(datetime.strptime(waste_date, "%d/%m/%Y").date()),
             't': waste_type
               }
             )
