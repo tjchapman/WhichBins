@@ -2,5 +2,4 @@ beautifulsoup4
 python-dotenv
 requests
 pendulum
-boto3
-botocore
+twilio

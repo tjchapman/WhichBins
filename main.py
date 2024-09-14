@@ -1,15 +1,17 @@
 import os
 import logging
 import pendulum
-from boto3 import resource, Session
+from twilio.rest import Client
 from dotenv import load_dotenv
-from send_text import SnsWrapper
+
 from waste_collection import Source
+from twillio import Twillio
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
+
+def main():
     ADDRESS = None
     PROPERTY = None
     POSTCODE = None
@@ -18,16 +20,16 @@ if __name__ == '__main__':
     PROPERTY = os.getenv('PROPERTY')
     ADDRESS = os.getenv('ADDRESS')
     PHONE = os.getenv('PHONE')
-    AWS_KEY = os.getenv('AWS_KEY')
-    AWS_SECRET = os.getenv('AWS_SECRET')
+    TWILLIO_SID = os.getenv('TWILLIO_SID')
+    TWILLIO_AUTH = os.getenv('TWILLIO_AUTH')
+    FROM_NUMBER = os.getenv('TWILLIO_NUMBER')
 
-    session = Session(aws_access_key_id=AWS_KEY, aws_secret_access_key=AWS_SECRET)
-    sns_resource = session.resource('sns', region_name='eu-west-2')
+    twill_client = Client(TWILLIO_SID, TWILLIO_AUTH)
 
     assert(len(PHONE)==13) # UK number in correct format
-    
+
     today = pendulum.now("Europe/London")
-    # today = pendulum.datetime(2024, 9, 17)
+    # today = pendulum.datetime(2024, 9, 17) # for testing
     today_fmted = today.to_date_string()
     tomorrow_fmted = today.add(days=1).to_date_string()
     
@@ -46,7 +48,7 @@ if __name__ == '__main__':
     bins_due = [bin for bin, day in bin_dict.items() if day == tomorrow_fmted]
     bins_due_fmtd = " & ".join(str(element) for element in bins_due)
 
-    sns_ = SnsWrapper(sns_resource=sns_resource)
+    twillio = Twillio(Client=twill_client)
     
     if bins_due:
         message = f'Bins for tomorrow are {bins_due_fmtd}'
@@ -54,6 +56,11 @@ if __name__ == '__main__':
         message = f'Uh oh change of plans... this is the bin schedule: {bin_dict}'
     logger.info(message)
 
-    # sns_.publish_text_message(phone_number=PHONE,message=message)
+    send_text = twillio.send_sms(from_number=FROM_NUMBER, to_number=PHONE, message=message)
 
-    # return ##TODO: wrap in func
+    return send_text
+
+
+
+if __name__ == '__main__':
+    main()
