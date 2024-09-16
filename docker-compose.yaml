@@ -1,5 +1,8 @@
+version: '3.8'
+
 services:
   which_bins:
     build:
       context: .
       dockerfile: Dockerfile
+    image: which_bins:latest
