@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 import os
+import sys
 import json
 import logging
 import requests
@@ -7,13 +9,12 @@ from dotenv import load_dotenv
 from waste_collection import Source
 
 load_dotenv()
-logger = logging.getLogger(__name__)
 
 def send_telegram(message, bot_token, chat_id):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + chat_id + \
         '&parse_mode=HTML&text=' + message
     response = requests.get(send_text)
-    print(response)
+    logging.info('GOT %s', response)
 
     return {
         'statusCode': 200,
@@ -24,6 +25,7 @@ def collect_bins(postcode, address=None,property=None):
 
     today = pendulum.now("Europe/London")
     tomorrow_fmted = today.add(days=1).to_date_string()
+    logging.debug('GOT tomorrow= %s', tomorrow_fmted)
     try:
         if address or property:
             waste_collection = Source(postcode=postcode, address=address, property=property)
@@ -45,20 +47,23 @@ def collect_bins(postcode, address=None,property=None):
         else:
             message = f'Uh oh change of plans... this is the bin schedule: {bin_dict}'
 
+        logging.info('GOT %s', message)
         return message
     
     except Exception as e:
         message= f'Error fetching bin status: {str(e)}'
+        logging.info('GOT ERROR %s', message)
         return message
 
 
 def main():
-    POSTCODE = os.getenv('POSTCODE')
-    PROPERTY = os.getenv('PROPERTY')
-    ADDRESS = os.getenv('ADDRESS')
+    POSTCODE = os.environ['POSTCODE']
+    PROPERTY = os.environ['PROPERTY']
+    ADDRESS = os.environ['ADDRESS']
 
-    BOT_TOKEN = os.environ.get('TELEGRAM_API_KEY')
-    BOT_CHAT_ID = os.environ.get('CHAT_ID')
+    BOT_TOKEN = os.environ['TELEGRAM_API_KEY']
+    BOT_TOKEN = os.environ['TELEGRAM_API_KEY']
+    BOT_CHAT_ID = os.environ['CHAT_ID']
 
     message=collect_bins(postcode=POSTCODE, address=ADDRESS, property=PROPERTY)
     send_telegram(message=message, bot_token=BOT_TOKEN, chat_id=BOT_CHAT_ID)
@@ -66,4 +71,5 @@ def main():
 
   
 if __name__ == '__main__':
-    main()
+    logging.basicConfig(level=logging.INFO)
+    sys.exit(main())
