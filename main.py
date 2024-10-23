@@ -69,6 +69,10 @@ def main():
     send_telegram(message=message, bot_token=BOT_TOKEN, chat_id=BOT_CHAT_ID)
     return 
 
+
+def handler(event, context):
+    main()  
+
   
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

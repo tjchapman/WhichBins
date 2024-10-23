@@ -1,0 +1,3 @@
+- Create for other councils, making council input as .env variable
+- Tidy up and improve README.md
+- Tidy up .env.example
