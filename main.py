@@ -62,11 +62,16 @@ def main():
     ADDRESS = os.environ['ADDRESS']
 
     BOT_TOKEN = os.environ['TELEGRAM_API_KEY']
-    BOT_TOKEN = os.environ['TELEGRAM_API_KEY']
-    BOT_CHAT_ID = os.environ['CHAT_ID']
 
     message=collect_bins(postcode=POSTCODE, address=ADDRESS, property=PROPERTY)
-    send_telegram(message=message, bot_token=BOT_TOKEN, chat_id=BOT_CHAT_ID)
+
+    with open('chat_id.json', 'r') as file:
+              chat_ids =  json.load(file)
+
+    for chat_id in chat_ids["details"]:
+        chat_id = chat_id['id']
+        send_telegram(message=message, bot_token=BOT_TOKEN, chat_id=chat_id)
+
     return 
 
 
