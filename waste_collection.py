@@ -1,6 +1,9 @@
+import logging
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 API_URL = "https://www.wokingham.gov.uk/rubbish-and-recycling/waste-collection/see-your-new-bin-collection-dates"
 HEADERS = {

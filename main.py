@@ -9,23 +9,21 @@ from dotenv import load_dotenv
 from waste_collection import Source
 
 load_dotenv()
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(funcName)s\t%(message)s')
 
-def send_telegram(message, bot_token, chat_id):
-    send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + chat_id + \
-        '&parse_mode=HTML&text=' + message
+def send_telegram(message: str, bot_token: str, chat_id: str):
+    send_text = 'https://api.telegram.org/bot' + str(bot_token) + '/sendMessage?chat_id=' + str(chat_id) + \
+        '&parse_mode=HTML&text=' + str(message)
     response = requests.get(send_text)
-    logging.info('GOT %s', response)
+    logger.info('GOT %s', response)
 
     return {
         'statusCode': 200,
-        'body': json.dumps(message)
+        'body': json.dumps(str(message))
     }
 
-def collect_bins(postcode, address=None,property=None):
-
-    today = pendulum.now("Europe/London")
-    tomorrow_fmted = today.add(days=1).to_date_string()
-    logging.debug('GOT tomorrow= %s', tomorrow_fmted)
+def collect_bins(postcode: str, date_to_check: str, address:str=None,property: int=None):
     try:
         if address or property:
             waste_collection = Source(postcode=postcode, address=address, property=property)
@@ -39,20 +37,21 @@ def collect_bins(postcode, address=None,property=None):
             arr.append({i['t']: i['date']})
 
         bin_dict= {k:v for e in arr for (k,v) in e.items()}
-        bins_due = [bin for bin, day in bin_dict.items() if day == tomorrow_fmted]
+        bins_due = [bin for bin, day in bin_dict.items() if day == date_to_check]
         bins_due_fmtd =  " & ".join(str(element) for element in bins_due)
 
         if bins_due:
             message = f'Bins for tomorrow: {bins_due_fmtd}'
         else:
-            message = f'Uh oh change of plans... this is the bin schedule: {bin_dict}'
+            sorted_bins= dict(sorted(bin_dict.items(), key=lambda item: item[1]))
+            message = f'Uh oh change of plans... this is the latest bin schedule: {sorted_bins}'
 
-        logging.info('GOT %s', message)
+        logger.info('GOT %s', message)
         return message
     
     except Exception as e:
         message= f'Error fetching bin status: {str(e)}'
-        logging.info('GOT ERROR %s', message)
+        logger.info('GOT ERROR %s', message)
         return message
 
 
@@ -63,7 +62,12 @@ def main():
 
     BOT_TOKEN = os.environ['TELEGRAM_API_KEY']
 
-    message=collect_bins(postcode=POSTCODE, address=ADDRESS, property=PROPERTY)
+    today = pendulum.now("Europe/London")
+    tomorrow_fmted = today.add(days=1).to_date_string()
+    logger.debug('GOT tomorrow= %s', tomorrow_fmted)
+
+    message =collect_bins(postcode=POSTCODE, date_to_check=tomorrow_fmted, address=ADDRESS, property=PROPERTY)
+    logger.debug(message)
 
     with open('chat_id.json', 'r') as file:
               chat_ids =  json.load(file)
@@ -80,5 +84,4 @@ def handler(event, context):
 
   
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     sys.exit(main())

@@ -1,4 +1,4 @@
-what i do...
+# Find your Council Bin Day and Get Notified
 
 ## To run in Lambda:
 
