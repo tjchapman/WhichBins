@@ -17,4 +17,4 @@ zip -r ../lambda_whichbins.zip .
 cd ..
 
 ## Zip in main.py and waste_collection.py
-zip lambda_whichbins.zip main.py waste_collection.py
+zip lambda_whichbins.zip main.py waste_collection.py councils/*
