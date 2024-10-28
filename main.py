@@ -6,7 +6,7 @@ import logging
 import requests
 import pendulum
 from dotenv import load_dotenv
-from waste_collection import Source
+from waste_collection import select_council
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -23,14 +23,17 @@ def send_telegram(message: str, bot_token: str, chat_id: str):
         'body': json.dumps(str(message))
     }
 
-def collect_bins(postcode: str, date_to_check: str, address:str=None,property: int=None):
+def collect_bins(council: str, postcode: str, date_to_check: str, address:str=None,property: int=None):
+    council_function = select_council(council=council)
     try:
         if address or property:
-            waste_collection = Source(postcode=postcode, address=address, property=property)
+            waste_collection = council_function(postcode=postcode, address=address, property=property)
         else:
             raise ValueError('Please supply an address or postcode')
     
         bin_days = waste_collection.fetch()
+        print(bin_days)
+
 
         arr = []
         for i in bin_days:
@@ -56,6 +59,7 @@ def collect_bins(postcode: str, date_to_check: str, address:str=None,property: i
 
 
 def main():
+    COUNCIL = os.environ['COUNCIL']
     POSTCODE = os.environ['POSTCODE']
     PROPERTY = os.environ['PROPERTY']
     ADDRESS = os.environ['ADDRESS']
@@ -66,7 +70,7 @@ def main():
     tomorrow_fmted = today.add(days=1).to_date_string()
     logger.debug('GOT tomorrow= %s', tomorrow_fmted)
 
-    message =collect_bins(postcode=POSTCODE, date_to_check=tomorrow_fmted, address=ADDRESS, property=PROPERTY)
+    message =collect_bins(council=COUNCIL, postcode=POSTCODE, date_to_check=tomorrow_fmted, address=ADDRESS, property=PROPERTY)
     logger.debug(message)
 
     with open('chat_id.json', 'r') as file:
